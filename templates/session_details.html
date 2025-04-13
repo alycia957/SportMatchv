@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportMatch - Détails de la session</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>SportMatch</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Accueil</a></li>
+                    <li><a href="{{ url_for('my_sessions') }}">Mes Sessions</a></li>
+                    <li><a href="{{ url_for('profile') }}">Profil</a></li>
+                    <li><a href="{{ url_for('logout') }}">Déconnexion</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="session-details-section">
+            <div class="section-header">
+                <h2>{{ session.sport_name }} - Détails de la session</h2>
+                <a href="{{ url_for('home') }}" class="button secondary">Retour</a>
+            </div>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <div class="flash-message">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <div class="session-info">
+                <div class="info-card">
+                    <div class="card-header">
+                        <h3>Informations sur la session</h3>
+                        <span class="status-badge {{ session.status }}">{{ session.status }}</span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Sport:</strong> {{ session.sport_name }}</p>
+                        <p><strong>Niveau:</strong> <span class="level-badge {{ session.skill_level.lower() }}">{{ session.skill_level }}</span></p>
+                        <p><strong>Lieu:</strong> {{ session.location }}</p>
+                        <p><strong>Date et heure:</strong> {{ session.datetime }}</p>
+                        <p><strong>Organisateur:</strong> {{ session.creator_name }}</p>
+                        <p><strong>Nombre de joueurs:</strong> {{ participants|length }}/{{ session.max_players }} (minimum: {{ session.min_players }})</p>
+                        
+                        {% if session.description %}
+                            <div class="description">
+                                <h4>Description:</h4>
+                                <p>{{ session.description }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        {% if is_creator %}
+                            <div class="creator-actions">
+                                {% if session.status == 'ouvert' %}
+                                    <form action="{{ url_for('update_session_status', session_id=session.id) }}" method="post" style="display: inline;">
+                                        <input type="hidden" name="status" value="complet">
+                                        <button type="submit" class="button">Marquer comme complet</button>
+                                    </form>
+                                {% elif session.status == 'complet' %}
+                                    <form action="{{ url_for('update_session_status', session_id=session.id) }}" method="post" style="display: inline;">
+                                        <input type="hidden" name="status" value="ouvert">
+                                        <button type="submit" class="button">Réouvrir la session</button>
+                                    </form>
+                                {% endif %}
+                                
+                                <form action="{{ url_for('update_session_status', session_id=session.id) }}" method="post" style="display: inline;">
+                                    <input type="hidden" name="status" value="annulé">
+                                    <button type="submit" class="button danger">Annuler la session</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <div class="participant-actions">
+                                {% if not is_participant and session.status == 'ouvert' %}
+                                    <form action="{{ url_for('join_session', session_id=session.id) }}" method="post">
+                                        <button type="submit" class="button primary">Rejoindre la session</button>
+                                    </form>
+                                {% elif is_participant %}
+                                    <form action="{{ url_for('leave_session', session_id=session.id) }}" method="post">
+                                        <button type="submit" class="button danger">Quitter la session</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="participants-card">
+                    <h3>Participants ({{ participants|length }}/{{ session.max_players }})</h3>
+                    {% if participants %}
+                        <ul class="participants-list">
+                            {% for participant in participants %}
+                                <li>
+                                    <div class="participant-info">
+                                        <span class="participant-name">{{ participant.username }}</span>
+                                        <span class="participant-status {{ participant.status }}">{{ participant.status }}</span>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucun participant pour le moment.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 SportMatch. Tous droits réservés.</p>
+        </div>
+    </footer>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

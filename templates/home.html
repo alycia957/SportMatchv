@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportMatch - Accueil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>SportMatch</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('home') }}" class="active">Accueil</a></li>
+                    <li><a href="{{ url_for('my_sessions') }}">Mes Sessions</a></li>
+                    <li><a href="{{ url_for('profile') }}">Profil</a></li>
+                    <li><a href="{{ url_for('logout') }}">Déconnexion</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="filters">
+            <h2>Trouver une session</h2>
+            <form action="{{ url_for('home') }}" method="get">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="sport_id">Sport:</label>
+                        <select name="sport_id" id="sport_id">
+                            <option value="">Tous les sports</option>
+                            {% for sport in sports %}
+                            <option value="{{ sport.id }}" {% if filters.sport_id == sport.id %}selected{% endif %}>{{ sport.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="skill_level_id">Niveau:</label>
+                        <select name="skill_level_id" id="skill_level_id">
+                            <option value="">Tous les niveaux</option>
+                            {% for level in skill_levels %}
+                            <option value="{{ level.id }}" {% if filters.skill_level_id == level.id %}selected{% endif %}>{{ level.level }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="date_from">Date (à partir de):</label>
+                        <input type="date" name="date_from" id="date_from" value="{{ filters.date_from if filters.date_from }}">
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="status">Status:</label>
+                        <select name="status" id="status">
+                            <option value="">Tous</option>
+                            <option value="ouvert" {% if filters.status == 'ouvert' %}selected{% endif %}>Ouvert</option>
+                            <option value="complet" {% if filters.status == 'complet' %}selected{% endif %}>Complet</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-button">
+                        <button type="submit">Filtrer</button>
+                        <a href="{{ url_for('home') }}" class="button secondary">Réinitialiser</a>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <section class="session-list">
+            <div class="section-header">
+                <h2>Sessions disponibles</h2>
+                <a href="{{ url_for('new_session') }}" class="button">Créer une session</a>
+            </div>
+
+            {% if sessions %}
+                <div class="sessions-grid">
+                    {% for session in sessions %}
+                        <div class="session-card">
+                            <div class="session-header">
+                                <h3>{{ session.sport_name }}</h3>
+                                <span class="level-badge {{ session.skill_level.lower() }}">{{ session.skill_level }}</span>
+                            </div>
+                            <div class="session-details">
+                                <p class="location"><strong>Lieu:</strong> {{ session.location }}</p>
+                                <p class="datetime"><strong>Date:</strong> {{ session.datetime }}</p>
+                                <p class="capacity"><strong>Participants:</strong> {{ session.participant_count }}/{{ session.max_players }}</p>
+                                <p class="creator"><strong>Organisateur:</strong> {{ session.creator_name }}</p>
+                            </div>
+                            <div class="session-actions">
+                                <a href="{{ url_for('session_details', session_id=session.id) }}" class="button">Détails</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-sessions">Aucune session ne correspond à vos critères.</p>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 SportMatch. Tous droits réservés.</p>
+        </div>
+    </footer>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

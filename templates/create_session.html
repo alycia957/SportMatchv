@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportMatch - Créer une session</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>SportMatch</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Accueil</a></li>
+                    <li><a href="{{ url_for('my_sessions') }}">Mes Sessions</a></li>
+                    <li><a href="{{ url_for('profile') }}">Profil</a></li>
+                    <li><a href="{{ url_for('logout') }}">Déconnexion</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="create-session-section">
+            <div class="section-header">
+                <h2>Créer une nouvelle session</h2>
+                <a href="{{ url_for('home') }}" class="button secondary">Retour</a>
+            </div>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <div class="flash-message">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <form action="{{ url_for('create_session') }}" method="post" class="create-session-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sport_id">Sport</label>
+                        <select name="sport_id" id="sport_id" required>
+                            <option value="">Sélectionnez un sport</option>
+                            {% for sport in sports %}
+                                <option value="{{ sport.id }}">{{ sport.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="skill_level_id">Niveau requis</label>
+                        <select name="skill_level_id" id="skill_level_id" required>
+                            <option value="">Sélectionnez un niveau</option>
+                            {% for level in skill_levels %}
+                                <option value="{{ level.id }}">{{ level.level }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="location">Lieu</label>
+                        <input type="text" id="location" name="location" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="datetime">Date et heure</label>
+                        <input type="datetime-local" id="datetime" name="datetime" required min="{{ datetime.now().strftime('%Y-%m-%dT%H:%M') }}">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="min_players">Nombre minimum de joueurs</label>
+                        <input type="number" id="min_players" name="min_players" min="2" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="max_players">Nombre maximum de joueurs</label>
+                        <input type="number" id="max_players" name="max_players" min="2" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="4"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="button primary">Créer la session</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 SportMatch. Tous droits réservés.</p>
+        </div>
+    </footer>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Validation du formulaire
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const minPlayers = parseInt(document.getElementById('min_players').value);
+            const maxPlayers = parseInt(document.getElementById('max_players').value);
+            
+            if (minPlayers > maxPlayers) {
+                e.preventDefault();
+                alert('Le nombre minimum de joueurs ne peut pas être supérieur au nombre maximum.');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+    "sports": [
+      "Football",
+      "Basketball",
+      "Tennis",
+      "Volleyball",
+      "Badminton",
+      "Running",
+      "Cycling",
+      "Swimming",
+      "Yoga",
+      "Golf"
+    ],
+    "skill_levels": [
+      "Débutant",
+      "Intermediaire", 
+      "Avancé",
+      "Expert"
+    ]
+  }

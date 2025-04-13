@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportMatch - Mes sessions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>SportMatch</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Accueil</a></li>
+                    <li><a href="{{ url_for('my_sessions') }}" class="active">Mes Sessions</a></li>
+                    <li><a href="{{ url_for('profile') }}">Profil</a></li>
+                    <li><a href="{{ url_for('logout') }}">Déconnexion</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="my-sessions-section">
+            <div class="section-header">
+                <h2>Mes sessions créées</h2>
+                <a href="{{ url_for('new_session') }}" class="button">Créer une session</a>
+            </div>
+            
+            {% if created_sessions %}
+                <div class="sessions-grid">
+                    {% for session in created_sessions %}
+                        <div class="session-card">
+                            <div class="session-header">
+                                <h3>{{ session.sport_name }}</h3>
+                                <span class="status-badge {{ session.status }}">{{ session.status }}</span>
+                            </div>
+                            <div class="session-details">
+                                <p class="location"><strong>Lieu:</strong> {{ session.location }}</p>
+                                <p class="datetime">
+                                    <strong>Date:</strong> 
+                                    {{ session.datetime.split(' ')[0]|replace('-', '/') }} 
+                                    <span class="time-remaining">
+                                        (dans {{ session.time_remaining }})
+                                    </span>
+                                </p>
+                                <p class="capacity"><strong>Participants:</strong> {{ session.participant_count }}/{{ session.max_players }}</p>
+                                <p class="level"><strong>Niveau:</strong> <span class="level-badge {{ session.skill_level.lower() }}">{{ session.skill_level }}</span></p>
+                            </div>
+                            <div class="session-actions">
+                                <a href="{{ url_for('session_details', session_id=session.id) }}" class="button">Détails</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>Vous n'avez pas encore créé de sessions.</p>
+            {% endif %}
+        </section>
+
+        <section class="my-participations-section">
+            <h2>Mes participations</h2>
+            
+            {% if participating_sessions %}
+                <div class="sessions-grid">
+                    {% for session in participating_sessions %}
+                        <div class="session-card">
+                            <div class="session-header">
+                                <h3>{{ session.sport_name }}</h3>
+                                <span class="status-badge {{ session.status }}">{{ session.status }}</span>
+                            </div>
+                            <div class="session-details">
+                                <p class="location"><strong>Lieu:</strong> {{ session.location }}</p>
+                                <p class="datetime">
+                                    <strong>Date:</strong> 
+                                    {{ session.datetime.strftime('%d/%m/%Y %H:%M') }}
+                                    <span class="time-remaining">
+                                        (dans {{ session.time_remaining }})
+                                    </span>
+                                </p>
+                                <p class="creator"><strong>Organisateur:</strong> {{ session.creator_name }}</p>
+                                <p class="level"><strong>Niveau:</strong> <span class="level-badge {{ session.skill_level.lower() }}">{{ session.skill_level }}</span></p>
+                                <p class="participation-status"><strong>Statut:</strong> <span class="participant-status {{ session.participation_status }}">{{ session.participation_status }}</span></p>
+                            </div>
+                            <div class="session-actions">
+                                <a href="{{ url_for('session_details', session_id=session.id) }}" class="button">Détails</a>
+                                <form action="{{ url_for('leave_session', session_id=session.id) }}" method="post" style="display: inline;">
+                                    <button type="submit" class="button danger">Quitter</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>Vous ne participez à aucune session pour le moment.</p>
+            {% endif %}
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportMatch - Profil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>SportMatch</h1>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Accueil</a></li>
+                    <li><a href="{{ url_for('my_sessions') }}">Mes Sessions</a></li>
+                    <li><a href="{{ url_for('profile') }}" class="active">Profil</a></li>
+                    <li><a href="{{ url_for('logout') }}">Déconnexion</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="profile-section">
+            <h2>Mon Profil</h2>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for message in messages %}
+                            <div class="flash-message">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <div class="profile-info">
+                <div class="info-group">
+                    <h3>Informations personnelles</h3>
+                    <p><strong>Nom d'utilisateur:</strong> {{ user.username }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Membre depuis:</strong> {{ user.created_at }}</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="sports-section">
+            <div class="section-header">
+                <h3>Mes Sports</h3>
+            </div>
+
+            {% if user_sports %}
+                <div class="sports-list">
+                    {% for sport in user_sports %}
+                        <div class="sport-item">
+                            <div class="sport-info">
+                                <h4>{{ sport.sport_name }}</h4>
+                                <span class="level-badge {{ sport.skill_level.lower() }}">{{ sport.skill_level }}</span>
+                            </div>
+                            <button class="button delete-sport" data-sport-id="{{ sport.sport_id }}">Supprimer</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>Vous n'avez pas encore ajouté de sports à votre profil.</p>
+            {% endif %}
+
+            <div class="add-sport">
+                <h4>Ajouter un sport</h4>
+                <form action="{{ url_for('add_user_sport') }}" method="post">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sport_id">Sport</label>
+                            <select name="sport_id" id="sport_id" required>
+                                <option value="">Sélectionnez un sport</option>
+                                {% for sport in sports %}
+                                    <option value="{{ sport.id }}">{{ sport.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="skill_level_id">Niveau</label>
+                            <select name="skill_level_id" id="skill_level_id" required>
+                                <option value="">Sélectionnez un niveau</option>
+                                {% for level in skill_levels %}
+                                    <option value="{{ level.id }}">{{ level.level }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="button">Ajouter</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 SportMatch. Tous droits réservés.</p>
+        </div>
+    </footer>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Script pour supprimer un sport
+        document.querySelectorAll('.delete-sport').forEach(button => {
+            button.addEventListener('click', function() {
+                const sportId = this.getAttribute('data-sport-id');
+                if (confirm('Êtes-vous sûr de vouloir supprimer ce sport de votre profil ?')) {
+                    fetch(`/profile/sports/${sportId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Recharger la page pour voir les changements
+                            window.location.reload();
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
