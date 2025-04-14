@@ -6,6 +6,7 @@ from datetime import datetime
 def init_db():
     # Connexion à la base de données (création si elle n'existe pas)
     conn = sqlite3.connect('sportmatch.db')
+    conn.text_factory = str  # Permet de stocker les chaînes en UTF-8
     cursor = conn.cursor()
     
     # Création des tables

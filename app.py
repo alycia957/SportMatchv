@@ -128,57 +128,74 @@ def new_session():
     
     return render_template('create_session.html', 
                           sports=sports, 
-                          skill_levels=skill_levels)
+                          skill_levels=skill_levels,
+                          datetime=datetime)
 
 
-@app.route('/sessions', methods=['POST'])
+@app.route('/create_session', methods=['GET', 'POST'])
 @login_required
 def create_session():
-    try:
-        # Récupération des données du formulaire
-        sport_id = int(request.form['sport_id'])
-        location = request.form['location']
-        datetime_str = request.form['datetime']  # Format: 'YYYY-MM-DDTHH:MM'
-        min_players = int(request.form['min_players'])
-        max_players = int(request.form['max_players'])
-        skill_level_id = int(request.form['skill_level_id'])
-        description = request.form['description']
+    sports = model.get_all_sports()
+    skill_levels = model.get_all_skill_levels()
+    
+    if request.method == 'POST':
+        try:
+            # Récupération des données du formulaire
+            sport_id = int(request.form['sport_id'])
+            location = request.form['location']
+            datetime_str = request.form['datetime']  
+            min_players = int(request.form['min_players'])
+            max_players = int(request.form['max_players'])
+            skill_level_id = int(request.form['skill_level_id'])
+            description = request.form['description']
 
-        # Conversion du format datetime
-        datetime_obj = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M')
-        datetime_db_format = datetime_obj.strftime('%Y-%m-%d %H:%M:%S')
+            # Conversion du format datetime
+            # Le format reçu du formulaire HTML est '%Y-%m-%dT%H:%M'
+            datetime_obj = datetime.strptime(datetime_str, '%Y-%m-%dT%H:%M')
+            # Convertir en chaîne au format que la base de données attend
+            datetime_db_format = datetime_obj.strftime('%Y-%m-%d %H:%M:%S')
 
-        # Validation des données
-        if min_players < 2:
-            flash('Le nombre minimum de joueurs doit être au moins 2')
-            return redirect(url_for('new_session'))
-        
-        if max_players < min_players:
-            flash('Le nombre maximum doit être supérieur ou égal au nombre minimum')
-            return redirect(url_for('new_session'))
+            # Création de la session dans la base de données
+            session_id = model.create_session(
+                sport_id=sport_id,
+                creator_id=session['user_id'],
+                location=location,
+                datetime_str=datetime_db_format,  # Passer la chaîne formatée
+                min_players=min_players,
+                max_players=max_players,
+                skill_level_id=skill_level_id,
+                description=description
+            )
 
-        # Création de la session dans la base de données
-        session_id = model.create_session(
-            sport_id=sport_id,
-            creator_id=session['user_id'],
-            location=location,
-            datetime_str=datetime_db_format,
-            min_players=min_players,
-            max_players=max_players,
-            skill_level_id=skill_level_id,
-            description=description
-        )
+            if not session_id:
+                flash("Erreur lors de la création de la session")
+                return render_template('create_session.html',
+                                      sports=sports,
+                                      skill_levels=skill_levels,
+                                      form_data=request.form)
 
-        flash('Session créée avec succès!')
-        return redirect(url_for('session_details', session_id=session_id))
+            flash('Session créée avec succès!')
+            return redirect(url_for('session_details', session_id=session_id))
 
-    except ValueError as e:
-        flash('Erreur dans les données fournies: ' + str(e))
-        return redirect(url_for('new_session'))
-    except Exception as e:
-        flash('Une erreur est survenue lors de la création de la session')
-        app.logger.error(f"Erreur création session: {str(e)}")
-        return redirect(url_for('new_session'))
+        except ValueError as e:
+            flash(f'Erreur de format: {str(e)}')
+            return render_template('create_session.html',
+                                  sports=sports,
+                                  skill_levels=skill_levels,
+                                  form_data=request.form)
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())  # Pour le débogage
+            flash(f'Une erreur est survenue: {str(e)}')
+            return render_template('create_session.html',
+                                  sports=sports,
+                                  skill_levels=skill_levels,
+                                  form_data=request.form)
+    
+    # GET request - afficher le formulaire
+    return render_template('create_session.html',
+                         sports=sports,
+                         skill_levels=skill_levels)
     
 @app.route('/sessions/<int:session_id>', methods=['GET'])
 @login_required
@@ -245,7 +262,7 @@ def leave_session(session_id):
     model.leave_session(session_id, session['user_id'])
     flash('Vous avez quitté la session.')
     return redirect(url_for('session_details', session_id=session_id))
-from datetime import datetime  # Ajoutez en haut du fichier
+
 
 @app.route('/my-sessions', methods=['GET'])
 @login_required
@@ -253,19 +270,22 @@ def my_sessions():
     created_sessions = model.get_user_created_sessions(session['user_id'])
     participating_sessions = model.get_user_participating_sessions(session['user_id'])
     
+    # Convertir les objets Row en dictionnaires pour pouvoir les modifier
+    created_sessions_list = [dict(s) for s in created_sessions]
+    participating_sessions_list = [dict(s) for s in participating_sessions]
+    
     # Formater les dates et calculer les différences
     now = datetime.now()
-    for s in created_sessions:
+    for s in created_sessions_list:
         s['time_remaining'] = calculate_time_remaining(s['datetime'], now)
     
-    for s in participating_sessions:
+    for s in participating_sessions_list:
         s['time_remaining'] = calculate_time_remaining(s['datetime'], now)
     
     return render_template('my_sessions.html', 
-                         created_sessions=created_sessions,
-                         participating_sessions=participating_sessions,
+                         created_sessions=created_sessions_list,
+                         participating_sessions=participating_sessions_list,
                          now=now)
-
 def calculate_time_remaining(session_datetime, current_datetime):
     """Calcule la différence entre deux dates et retourne un string formaté"""
     if isinstance(session_datetime, str):
@@ -274,7 +294,7 @@ def calculate_time_remaining(session_datetime, current_datetime):
         except ValueError:
             session_datetime = datetime.strptime(session_datetime, '%Y-%m-%d %H:%M:%S.%f')
     
-        delta = session_datetime - current_datetime
+    delta = session_datetime - current_datetime
     total_seconds = delta.total_seconds()
     
     if total_seconds < 0:
