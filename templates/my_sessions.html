@@ -74,7 +74,7 @@
                                 <p class="location"><strong>Lieu:</strong> {{ session.location }}</p>
                                 <p class="datetime">
                                     <strong>Date:</strong> 
-                                    {{ session.datetime.strftime('%d/%m/%Y %H:%M') }}
+                                    {{ session.datetime.split(' ')[0]|replace('-', '/') }} {{ session.datetime.split(' ')[1] if ' ' in session.datetime else '' }}
                                     <span class="time-remaining">
                                         (dans {{ session.time_remaining }})
                                     </span>
